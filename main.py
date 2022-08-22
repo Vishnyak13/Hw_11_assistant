@@ -1,27 +1,60 @@
 from collections import UserDict
 from typing import List, Tuple
+from datetime import date, datetime
+import re
 
 
 class Field:
     def __init__(self, value) -> None:
+        self._value = None
         self.value = value
 
-    def __str__(self) -> str:
-        return f'{self.value}'
+    @property
+    def value(self):
+        return self.value
+
+    @value.setter
+    def value(self, value):
+        self._value = value
 
 
 class Name(Field):
-    pass
+    @Field.value.setter
+    def value(self, name: str):
+        if not isinstance(name, str):
+            raise TypeError('The name must be a string!')
+        if not re.match(r"[a-zA-Z]{1,16}", name):
+            raise ValueError('The name must contain only letters up to 16 characters long!')
+        self._value = name
 
 
 class Phone(Field):
-    pass
+    @Field.value.setter
+    def value(self, phone: str):
+        if not isinstance(phone, str):
+            raise TypeError('The phone must be a string!')
+        if not re.match(r"^380\d{7}$", phone):
+            raise ValueError('Please enter your phone number in the format 380ХХХХХХХ')
+        self._value = phone
+
+
+class Birthday(Field):
+    @Field.value.setter
+    def value(self, value: str):
+        try:
+            self.value = datetime.strptime(value, "%d.%m.%Y").date()
+        except ValueError:
+            raise ValueError('Incorrect date format, try format: DD.MM.YYYY')
+
+    def __repr__(self):
+        return f"{self.value}"
 
 
 class Record:
-    def __init__(self, name: Name, phones: List[Phone] = []) -> None:
+    def __init__(self, name: Name, phones: List[Phone] = [], birthday: Birthday = None) -> None:
         self.name = name
         self.phones = phones
+        self.birthday = birthday
 
     def add_phone(self, phone: Phone) -> Phone | None:
         if phone.value not in [p.value for p in self.phones]:
@@ -39,20 +72,46 @@ class Record:
             self.add_phone(new_phone)
             return phone, new_phone
 
-    def __str__(self) -> str:
-        return f'Phones {", ".join([p.value for p in self.phones])}'
+    def add_birthday(self, birthday: Birthday):
+        if birthday:
+            self.birthday = birthday
+
+    def days_to_birthday(self):
+        date_now = date.today()
+        birth_day = date(date_now.year, self.birthday.value.month, self.birthday.value.day)
+        if birth_day < date_now:
+            birth_day = date(date_now.year + 1, self.birthday.value.month, self.birthday.value.day)
+        return (birth_day - date_now).days
+
+    def __repr__(self):
+        if self.birthday:
+            return f'{", ".join([p.value for p in self.phones])} Birthday: {self.birthday}'
+        return f'{", ".join([p.value for p in self.phones])}'
 
 
 class AddressBook(UserDict):
     def add_record(self, record: Record) -> Record | None:
-        self.data[record.name.value] = record
-        return record
+        if not self.data.get(record.name.value):
+            self.data[record.name.value] = record
+            return record
 
     def del_record(self, key: str) -> Record | None:
         rec_del = self.data.get(key)
         if rec_del:
             self.data.pop(key)
             return rec_del
+
+    def iterator(self, n=2):
+        step = 0
+        result = '\n'
+        for k, v in self.data.items():
+            result += f'{k} {v}\n'
+            step += 1
+            if step >= n:
+                yield result
+                result = ' ' * 40 + '\n'
+                step = 0
+        yield result
 
 
 def input_error(func):
@@ -69,8 +128,8 @@ def input_error(func):
     return inner
 
 
-def unknown_command(*args):
-    return "Unknown command, try again or write 'help'!"
+# def unknown_command(*args):
+#     return "Unknown command, try again or write 'help'!"
 
 
 def greeting(*args):
@@ -87,10 +146,12 @@ contact_dict = AddressBook()
 @input_error
 def add_contact(*args):
     rec = Record(Name(args[0]), [Phone(args[1])])
-    if contact_dict.add_record(rec):
-        return f"Contact {rec.name.value} successfully added!"
-    else:
-        return f"Contact {rec.name.value} already in contact list"
+    contact_dict.add_record(rec)
+    try:
+        rec.add_birthday(Birthday(args[2]))
+    except IndexError:
+        birthday = None
+    return f"Contact {rec.name.value} has added successfully."
 
 
 @input_error
@@ -104,7 +165,7 @@ def change_phone(*args):
 
 @input_error
 def remove_contact(*args):
-    rec = notebook.get(args[0])
+    rec = contact_dict.get(args[0])
     if rec:
         rec.del_phone(Phone(args[1]))
         return f'Contact {args[1]} has deleted successfully from contact {rec.name.value}.'
@@ -121,6 +182,14 @@ def show_all(*args):
         contact_dict) > 0 else 'Contacts are empty'
 
 
+@input_error
+def days_to_births(*args):
+    rec = contact_dict.get(args[0])
+    if rec:
+        return f'Contact {rec.name.value.title()} has {rec.days_to_birthday()} days to birthday.'
+    return f'Contact {args[0]} not in notebook.'
+
+
 def help(*args):
     return """
 Enter "hello", "hi" for greeting
@@ -130,6 +199,7 @@ Enter "phone", "number", "find" for find phone
 Enter "show all", "show" for show all contacts
 Enter "good bye", "close", "exit", ".", "bye", "stop" for exit exit the program
 Enter "del", "delete", "remove" for delete contact
+Enter "birth", "show birth" to display a list of contacts with birthdays
 Enter "help" to open a list of all commands
 """
 
@@ -139,6 +209,7 @@ commands = {
     add_contact: ["add", "new"],
     change_phone: ["change", "replace"],
     find_phone: ["phone", "number", "find"],
+    days_to_births: ["birth", "show birth"],
     show_all: ["show all", "show"],
     to_exit: ["good bye", "close", "exit", ".", "bye", "stop"],
     remove_contact: ["del", "delete", "remove"],
@@ -151,8 +222,6 @@ def input_parser(user_input):
         for i in values:
             if user_input.lower().startswith(i.lower()):
                 return key, user_input[len(i):].strip().split()
-    else:
-        return unknown_command, []
 
 
 def main():
@@ -166,3 +235,14 @@ def main():
 
 if __name__ == "__main__":
     main()
+    ab = AddressBook()
+    ab.add_record(Record(name=Name("Bill"), phones=[Phone("0987678989")]))
+    ab.add_record(Record(name=Name("Stella"), phones=[Phone("0987678990")]))
+    ab.add_record(Record(name=Name("Bella"), phones=[Phone("0987678991")]))
+    ab.add_record(Record(name=Name("Bart"), phones=[Phone("0666541236")]))
+    ab.add_record(Record(name=Name("Homer"), phones=[Phone("0934125632")]))
+    ab.add_record(Record(name=Name("Lisa"), phones=[Phone("0508451230")]))
+    ab.add_record(Record(name=Name("Marge"), phones=[Phone("0664122098")]))
+    ab.add_record(Record(name=Name("Meggy"), phones=[Phone("0734122098")]))
+    for i in ab.iterator(2):
+        print(i)
