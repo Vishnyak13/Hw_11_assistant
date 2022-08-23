@@ -11,7 +11,7 @@ class Field:
 
     @property
     def value(self):
-        return self.value
+        return self._value
 
     @value.setter
     def value(self, value):
@@ -23,7 +23,7 @@ class Name(Field):
     def value(self, name: str):
         if not isinstance(name, str):
             raise TypeError('The name must be a string!')
-        if not re.match(r"[a-zA-Z]{1,16}$", name):
+        if not re.match(r"^[a-zA-Z]{1,16}$", name):
             raise ValueError('The name must contain only letters up to 16 characters long!')
         self._value = name
 
@@ -33,7 +33,7 @@ class Phone(Field):
     def value(self, phone: str):
         if not isinstance(phone, str):
             raise TypeError('The phone must be a string!')
-        if not re.match(r"^380\d{7}$", phone):
+        if not re.match(r'^[0-9]{10}$', phone):
             raise ValueError('Please enter your phone number in the format 380ХХХХХХХ')
         self._value = phone
 
@@ -120,16 +120,16 @@ def input_error(func):
             return func(*args, **kwargs)
         except IndexError:
             return "Please enter the contact in the format:\nName: phone number"
-        except ValueError:
-            return "Incorrectly entered command!"
+        # except ValueError:
+        #     return "Incorrectly entered command!"
         except KeyError:
             return "Contact not found"
 
     return inner
 
 
-# def unknown_command(*args):
-#     return "Unknown command, try again or write 'help'!"
+def unknown_command(*args):
+    return "Unknown command, try again or write 'help'!"
 
 
 def greeting(*args):
@@ -222,6 +222,7 @@ def input_parser(user_input):
         for i in values:
             if user_input.lower().startswith(i.lower()):
                 return key, user_input[len(i):].strip().split()
+    return unknown_command, []
 
 
 def main():
@@ -235,3 +236,14 @@ def main():
 
 if __name__ == "__main__":
     main()
+    ab = AddressBook()
+    ab.add_record(Record(name=Name("Bill"), phones=[Phone("0987678989")]))
+    ab.add_record(Record(name=Name("Stella"), phones=[Phone("0987678990")]))
+    ab.add_record(Record(name=Name("Bella"), phones=[Phone("0987678991")]))
+    ab.add_record(Record(name=Name("Bart"), phones=[Phone("0666541236")]))
+    ab.add_record(Record(name=Name("Homer"), phones=[Phone("0934125632")]))
+    ab.add_record(Record(name=Name("Lisa"), phones=[Phone("0508451230")]))
+    ab.add_record(Record(name=Name("Marge"), phones=[Phone("0664122098")]))
+    ab.add_record(Record(name=Name("Meggy"), phones=[Phone("0734122098")]))
+    for i in ab.iterator(2):
+        print(i)
