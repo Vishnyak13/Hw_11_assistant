@@ -23,7 +23,7 @@ class Name(Field):
     def value(self, name: str):
         if not isinstance(name, str):
             raise TypeError('The name must be a string!')
-        if not re.match(r"[a-zA-Z]{1,16}", name):
+        if not re.match(r"[a-zA-Z]{1,16}$", name):
             raise ValueError('The name must contain only letters up to 16 characters long!')
         self._value = name
 
@@ -57,15 +57,15 @@ class Record:
         self.birthday = birthday
 
     def add_phone(self, phone: Phone) -> Phone | None:
-        if phone.value not in [p.value for p in self.phones]:
+        if phone.value not in [ph.value for ph in self.phones]:
             self.phones.append(phone)
             return phone
 
     def del_phone(self, phone: Phone) -> None:
-        for p in self.phones:
-            if p.value == phone.value:
-                self.phones.remove(p)
-                return p
+        for ph in self.phones:
+            if ph.value == phone.value:
+                self.phones.remove(ph)
+                return ph
 
     def change_phone(self, phone, new_phone) -> Tuple[Phone, Phone] | None:
         if self.del_phone(phone):
@@ -85,8 +85,8 @@ class Record:
 
     def __repr__(self):
         if self.birthday:
-            return f'{", ".join([p.value for p in self.phones])} Birthday: {self.birthday}'
-        return f'{", ".join([p.value for p in self.phones])}'
+            return f'{", ".join([ph.value for ph in self.phones])} Birthday: {self.birthday}'
+        return f'{", ".join([ph.value for ph in self.phones])}'
 
 
 class AddressBook(UserDict):
@@ -190,7 +190,7 @@ def days_to_births(*args):
     return f'Contact {args[0]} not in notebook.'
 
 
-def help(*args):
+def help():
     return """
 Enter "hello", "hi" for greeting
 Enter "add", "new" for add new contact
@@ -209,7 +209,7 @@ commands = {
     add_contact: ["add", "new"],
     change_phone: ["change", "replace"],
     find_phone: ["phone", "number", "find"],
-    days_to_births: ["birth", "show birth"],
+    days_to_births: ["birth", "show birth", "days"],
     show_all: ["show all", "show"],
     to_exit: ["good bye", "close", "exit", ".", "bye", "stop"],
     remove_contact: ["del", "delete", "remove"],
@@ -235,14 +235,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-    ab = AddressBook()
-    ab.add_record(Record(name=Name("Bill"), phones=[Phone("0987678989")]))
-    ab.add_record(Record(name=Name("Stella"), phones=[Phone("0987678990")]))
-    ab.add_record(Record(name=Name("Bella"), phones=[Phone("0987678991")]))
-    ab.add_record(Record(name=Name("Bart"), phones=[Phone("0666541236")]))
-    ab.add_record(Record(name=Name("Homer"), phones=[Phone("0934125632")]))
-    ab.add_record(Record(name=Name("Lisa"), phones=[Phone("0508451230")]))
-    ab.add_record(Record(name=Name("Marge"), phones=[Phone("0664122098")]))
-    ab.add_record(Record(name=Name("Meggy"), phones=[Phone("0734122098")]))
-    for i in ab.iterator(2):
-        print(i)
