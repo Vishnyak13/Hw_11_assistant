@@ -42,7 +42,7 @@ class Birthday(Field):
     @Field.value.setter
     def value(self, value: str):
         try:
-            self.value = datetime.strptime(value, "%d.%m.%Y").date()
+            self._value = datetime.strptime(value, "%d.%m.%Y").date()
         except ValueError:
             raise ValueError('Incorrect date format, try format: DD.MM.YYYY')
 
@@ -103,13 +103,13 @@ class AddressBook(UserDict):
 
     def iterator(self, n=2):
         step = 0
-        result = '\n'
+        result = '_' * 20 + '\n'
         for k, v in self.data.items():
             result += f'{k} {v}\n'
             step += 1
             if step >= n:
                 yield result
-                result = ' ' * 40 + '\n'
+                result = '_' * 20 + '\n'
                 step = 0
         yield result
 
@@ -178,8 +178,10 @@ def find_phone(*args):
 
 
 def show_all(*args):
-    return "\n".join([f"{key.title()}: {value}" for key, value in contact_dict.items()]) if len(
-        contact_dict) > 0 else 'Contacts are empty'
+    # return "\n".join([f"{key.title()}: {value}" for key, value in contact_dict.items()]) if len(
+    #     contact_dict) > 0 else 'Contacts are empty'
+    try:
+        pass
 
 
 @input_error
@@ -199,7 +201,7 @@ Enter "phone", "number", "find" for find phone
 Enter "show all", "show" for show all contacts
 Enter "good bye", "close", "exit", ".", "bye", "stop" for exit exit the program
 Enter "del", "delete", "remove" for delete contact
-Enter "birth", "show birth" to display a list of contacts with birthdays
+Enter "birth", "show birth", "days" to display a list of contacts with birthdays
 Enter "help" to open a list of all commands
 """
 
@@ -236,14 +238,10 @@ def main():
 
 if __name__ == "__main__":
     main()
-    ab = AddressBook()
-    ab.add_record(Record(name=Name("Bill"), phones=[Phone("0987678989")]))
-    ab.add_record(Record(name=Name("Stella"), phones=[Phone("0987678990")]))
-    ab.add_record(Record(name=Name("Bella"), phones=[Phone("0987678991")]))
-    ab.add_record(Record(name=Name("Bart"), phones=[Phone("0666541236")]))
-    ab.add_record(Record(name=Name("Homer"), phones=[Phone("0934125632")]))
-    ab.add_record(Record(name=Name("Lisa"), phones=[Phone("0508451230")]))
-    ab.add_record(Record(name=Name("Marge"), phones=[Phone("0664122098")]))
-    ab.add_record(Record(name=Name("Meggy"), phones=[Phone("0734122098")]))
-    for i in ab.iterator(2):
-        print(i)
+    # test = AddressBook()
+    # test.add_record(Record(name=Name("Ivan"), phones=[Phone("0987678989")], birthday=Birthday("12.05.1985")))
+    # test.add_record(Record(name=Name("Stepan"), phones=[Phone("0987678990")], birthday=Birthday("12.08.1985")))
+    # test.add_record(Record(name=Name("Katya"), phones=[Phone("0987678991")]))
+    # test.add_record(Record(name=Name("Olga"), phones=[Phone("0666541236")]))
+    # for i in test.iterator(2):
+    #     print(i)
