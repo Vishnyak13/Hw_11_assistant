@@ -180,8 +180,13 @@ def find_phone(*args):
 def show_all(*args):
     # return "\n".join([f"{key.title()}: {value}" for key, value in contact_dict.items()]) if len(
     #     contact_dict) > 0 else 'Contacts are empty'
-    try:
-        pass
+    if not contact_dict:
+        return 'Contacts are empty'
+    result = "List of contacts:\n"
+    print_result = contact_dict.iterator()
+    for line in print_result:
+        result += line
+    return result
 
 
 @input_error
