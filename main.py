@@ -34,7 +34,7 @@ class Phone(Field):
         if not isinstance(phone, str):
             raise TypeError('The phone must be a string!')
         if not re.match(r'^[0-9]{10}$', phone):
-            raise ValueError('Please enter your phone number in the format 380ХХХХХХХ')
+            raise ValueError('Phone number must be 10 digits!')
         self._value = phone
 
 
